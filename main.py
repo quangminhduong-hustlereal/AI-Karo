@@ -1,7 +1,8 @@
 from src.game import Game
 from src.ai import CaroAI
-from src.ui import print_board, show_status, get_player_move, console
+from src.ui import print_board, show_status, get_player_move, console, draw_screen
 import time
+
 
 def main():
     import argparse
@@ -13,14 +14,17 @@ def main():
     size = args.size
     win_condition = args.win
     difficulty = args.difficulty
+
     game = Game(size, win_condition)
     ai = CaroAI(player='O', opponent='X')
+
     while True:
         game.reset()
         while not game.finished:
             console.clear()
-            print_board(game.board, highlight=game.board.last_move, win_seq=game.get_winning_sequence(), show_index=True)
-            show_status(game)
+            # Draw full screen layout
+            draw_screen(game, difficulty=difficulty, thinking=False, timer=None, show_index=True)
+
             if game.current_player == 'X':
                 move = get_player_move(game.board)
                 if move == 'quit':
@@ -36,18 +40,19 @@ def main():
                     console.print("[bold yellow]Nước đi không hợp lệ, hãy thử lại![/bold yellow]")
                     time.sleep(1)
             else:
-                console.print("[bold red]AI đang suy nghĩ...[/bold red]")
+                # AI Thinking indicator
+                console.clear()
+                draw_screen(game, difficulty=difficulty, thinking=True, timer=None, show_index=True)
                 t0 = time.time()
                 row, col = ai.get_move(game.board, win_condition, difficulty)
                 t1 = time.time()
                 game.make_move(row, col)
-                print_board(game.board, highlight=(row, col), win_seq=game.get_winning_sequence(), show_index=True)
-                show_status(game, timer=t1-t0)
+                console.clear()
+                draw_screen(game, difficulty=difficulty, thinking=False, timer=t1 - t0, show_index=True)
                 time.sleep(0.5)
         # End of game
         console.clear()
-        print_board(game.board, win_seq=game.get_winning_sequence(), show_index=True)
-        show_status(game)
+        draw_screen(game, difficulty=difficulty, thinking=False, timer=None, show_index=True)
         if game.winner:
             if game.winner == 'X':
                 console.print("[bold green]Bạn đã thắng![/bold green]")
@@ -58,6 +63,7 @@ def main():
         again = console.input("[bold magenta]Chơi lại? (y/n): [/bold magenta]")
         if again.lower() not in ["y", "yes"]:
             break
+
 
 if __name__ == "__main__":
     main()
