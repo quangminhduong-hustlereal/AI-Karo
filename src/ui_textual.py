@@ -123,6 +123,10 @@ class CaroApp(App):
         self.message_panel: InfoPanel
         self.input_box: Input
 
+        # DataTable key caches
+        self.row_keys = []
+        self.col_keys = []  # includes the first label column at index 0
+
     def compose(self) -> ComposeResult:
         self.header = HeaderBar(
             title="Caro (Gomoku)",
@@ -166,17 +170,22 @@ class CaroApp(App):
 
     def _setup_board(self) -> None:
         self.board_table.clear(columns=True)
+        self.row_keys = []
+        self.col_keys = []
         self.board_table.cursor_type = "cell"
         # First column header blank, others 1..N
-        self.board_table.add_column(" ")
+        blank_key = self.board_table.add_column(" ")
+        self.col_keys.append(blank_key)
         for c in range(self.game.size):
-            self.board_table.add_column(str(c + 1), width=3)
+            col_key = self.board_table.add_column(str(c + 1), width=3)
+            self.col_keys.append(col_key)
         # Add rows
         for r in range(self.game.size):
             row_data = [f"[b]{r + 1}[/b]"]
             for c in range(self.game.size):
                 row_data.append(self._cell_display(r, c, show_index=True))
-            self.board_table.add_row(*row_data)
+            row_key = self.board_table.add_row(*row_data)
+            self.row_keys.append(row_key)
 
     def _cell_content(self, r: int, c: int, show_index: bool = True) -> str:
         cell = self.game.board.grid[r][c]
@@ -197,9 +206,10 @@ class CaroApp(App):
         return content
 
     def _refresh_board(self) -> None:
-        for r in range(self.game.size):
+        for r, row_key in enumerate(self.row_keys):
             for c in range(self.game.size):
-                self.board_table.update_cell(r, c + 1, self._cell_display(r, c, show_index=True))
+                col_key = self.col_keys[c + 1]
+                self.board_table.update_cell(row_key, col_key, self._cell_display(r, c, show_index=True))
 
     def _update_sidebars(self, ai_time: Optional[float] = None) -> None:
         status = (
@@ -334,7 +344,13 @@ class CaroApp(App):
         r, c = event.coordinate
         if c == 0:
             return
-        await self._handle_player_move(r, c - 1)
+        # Translate coordinate to indices using our caches
+        try:
+            row_index = self.row_keys.index(event.cell_key.row_key)
+            col_index = self.col_keys.index(event.cell_key.column_key) - 1
+        except ValueError:
+            return
+        await self._handle_player_move(row_index, col_index)
 
 
 def run_textual_app(size: int, win_condition: int, difficulty: str) -> None:
