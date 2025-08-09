@@ -100,6 +100,7 @@ class CaroApp(App):
         ("q", "quit", "Thoát"),
         ("u", "undo", "Hoàn tác"),
         ("r", "redo", "Làm lại"),
+        ("n", "new", "Ván mới"),
     ]
 
     game: Game
@@ -161,6 +162,7 @@ class CaroApp(App):
         self._setup_board()
         self._update_sidebars()
         self._update_message("[dim]Sẵn sàng. Lượt của bạn (X).[/dim]")
+        self.set_focus(self.input_box)
 
     def _setup_board(self) -> None:
         self.board_table.clear(columns=True)
@@ -220,10 +222,9 @@ class CaroApp(App):
             self.moves_panel.set_text("[dim]Chưa có nước đi[/dim]")
 
         self.help_panel.set_text(
-            "- Nhập số ô trống để đánh (ví dụ 37)\n"
-            "- u: Undo | r: Redo | q: Thoát\n"
-            "- Số mờ là các ô trống có thể đánh\n"
-            "- Ô xanh: nước đi cuối | Ô vàng: chuỗi thắng"
+            "Nhập số ô rồi Enter (vd: 37)\n"
+            "u: Hoàn tác  |  n: Ván mới  |  q: Thoát\n"
+            "Ô mờ: ô trống | Ô xanh: nước cuối | Ô vàng: chuỗi thắng"
         )
 
     def _update_message(self, text: str) -> None:
@@ -246,8 +247,17 @@ class CaroApp(App):
             return
         self._update_message("[dim]Redo chưa được hỗ trợ.[/dim]")
 
+    async def action_new(self) -> None:
+        if self.thinking:
+            return
+        self.game.reset()
+        self._refresh_board()
+        self._update_sidebars()
+        self._update_message("[dim]Ván mới. Lượt của bạn (X).[/dim]")
+        self.set_focus(self.input_box)
+
     async def on_input_submitted(self, event: Input.Submitted) -> None:
-        if self.thinking or self.game.finished:
+        if self.thinking:
             event.input.value = ""
             return
         text = (event.value or "").strip().lower()
@@ -262,6 +272,9 @@ class CaroApp(App):
             return
         if text == "r":
             await self.action_redo()
+            return
+        if text == "n":
+            await self.action_new()
             return
         # Try parse move index
         try:
@@ -311,7 +324,17 @@ class CaroApp(App):
         self._refresh_board()
         self._update_sidebars(ai_time=(t1 - t0))
         self.thinking = False
-        self._maybe_finish()
+        if not self._maybe_finish():
+            self.set_focus(self.input_box)
+
+    async def on_data_table_cell_selected(self, event: DataTable.CellSelected) -> None:
+        # Allow clicking on a board cell to play
+        if self.thinking or self.game.finished:
+            return
+        r, c = event.coordinate
+        if c == 0:
+            return
+        await self._handle_player_move(r, c - 1)
 
 
 def run_textual_app(size: int, win_condition: int, difficulty: str) -> None:
