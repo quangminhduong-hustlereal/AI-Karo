@@ -43,9 +43,10 @@ def main():
                 # AI Thinking indicator
                 console.clear()
                 draw_screen(game, difficulty=difficulty, thinking=True, timer=None, show_index=True)
-                t0 = time.time()
-                row, col = ai.get_move(game.board, win_condition, difficulty)
-                t1 = time.time()
+                with console.status("[bold cyan]AI đang suy nghĩ…[/bold cyan]", spinner="dots"):
+                    t0 = time.time()
+                    row, col = ai.get_move(game.board, win_condition, difficulty)
+                    t1 = time.time()
                 game.make_move(row, col)
                 console.clear()
                 draw_screen(game, difficulty=difficulty, thinking=False, timer=t1 - t0, show_index=True)
