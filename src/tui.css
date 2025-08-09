@@ -1,0 +1,29 @@
+# Body layout
+#board, #right {
+    height: 1fr;
+}
+
+#body {
+    height: 1fr;
+}
+
+BoardWidget {
+    border: tall $accent;
+    padding: 1 2;
+}
+
+#right {
+    min-width: 36;
+}
+
+Static {
+    padding: 1;
+}
+
+Footer, Header {
+    background: $boost;
+}
+
+Screen {
+    background: $surface;
+}
