@@ -1,5 +1,12 @@
-from src.ui_textual import run_textual_app
+# Ensure the 'src' folder/package is importable when running as a script
+import sys
+from pathlib import Path
+ROOT = Path(__file__).parent
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
 
+from src.ui import run_textual_app
 
 def main():
     import argparse
