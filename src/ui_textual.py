@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Optional, Tuple
+from typing import Optional
 
 from textual.app import App, ComposeResult
 from textual.reactive import reactive
 from textual.widgets import Static, Input, DataTable
 from textual.containers import Horizontal, Vertical, Container
-from textual import events
 
 from .game import Game
 from .ai import CaroAI
@@ -135,7 +134,7 @@ class CaroApp(App):
         self.header.id = "header"
 
         # Main area with board and sidebar
-        self.board_table = DataTable(zebra_stripes=False, cursor_type="row")
+        self.board_table = DataTable(zebra_stripes=False, cursor_type="cell")
         left = Container(self.board_table, id="left")
 
         self.status_panel = InfoPanel(classes="panel")
@@ -172,7 +171,6 @@ class CaroApp(App):
         self.board_table.clear(columns=True)
         self.row_keys = []
         self.col_keys = []
-        self.board_table.cursor_type = "cell"
         # First column header blank, others 1..N
         blank_key = self.board_table.add_column(" ")
         self.col_keys.append(blank_key)
