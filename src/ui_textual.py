@@ -91,7 +91,7 @@ class CaroApp(App):
 
     Input {
         width: 100%;
-        border: rounded #334155;
+        border: round #334155;
         background: #0f172a;
     }
     """
@@ -173,9 +173,8 @@ class CaroApp(App):
         for r in range(self.game.size):
             row_data = [f"[b]{r + 1}[/b]"]
             for c in range(self.game.size):
-                row_data.append(self._cell_content(r, c, show_index=True))
+                row_data.append(self._cell_display(r, c, show_index=True))
             self.board_table.add_row(*row_data)
-        self._apply_highlights()
 
     def _cell_content(self, r: int, c: int, show_index: bool = True) -> str:
         cell = self.game.board.grid[r][c]
@@ -186,26 +185,19 @@ class CaroApp(App):
             return f"[dim]{idx}[/dim]"
         return " "
 
-    def _apply_highlights(self) -> None:
-        # Clear styles first
-        for r in range(self.game.size):
-            for c in range(self.game.size):
-                self.board_table.set_cell_style(r, c + 1, None)
-        # Last move
-        if self.game.board.last_move:
-            lr, lc = self.game.board.last_move
-            self.board_table.set_cell_style(lr, lc + 1, "on #1f2937 bold")
-        # Winning sequence
+    def _cell_display(self, r: int, c: int, show_index: bool = True) -> str:
+        content = self._cell_content(r, c, show_index=show_index)
         win_seq = self.game.get_winning_sequence()
-        if win_seq:
-            for wr, wc in win_seq:
-                self.board_table.set_cell_style(wr, wc + 1, "on #fde68a bold")
+        if win_seq and (r, c) in win_seq:
+            return f"[on #fde68a bold]{content}[/]"
+        if self.game.board.last_move and (r, c) == self.game.board.last_move:
+            return f"[on #1f2937 bold]{content}[/]"
+        return content
 
     def _refresh_board(self) -> None:
         for r in range(self.game.size):
             for c in range(self.game.size):
-                self.board_table.update_cell(r, c + 1, self._cell_content(r, c, show_index=True))
-        self._apply_highlights()
+                self.board_table.update_cell(r, c + 1, self._cell_display(r, c, show_index=True))
 
     def _update_sidebars(self, ai_time: Optional[float] = None) -> None:
         status = (
